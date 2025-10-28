@@ -1,0 +1,29 @@
+.navbar-text {
+    color: var(--TextColor);
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.navbar-expand-lg.bg-body-tertiary {
+    background-color: var(--primaryAccent) !important;
+}
+
+.btn {
+    background-color: var(--button_highlight) !important;
+    border-color: var(--button_highlight) !important;
+    color: var(--TextColor) !important;
+}
+
+.btn-primary {
+  width: 240px !important;
+  height: 60px !important;
+  font-size: larger !important;
+}
+
+:root {
+    --bs-body-bg: #ffffff;
+    --primaryAccent: #2e3a59;
+    --secondaryAccent: #e58f00;
+    --TextColor: #e6ebef;
+    --button_highlight: #4267b2; 
+}
