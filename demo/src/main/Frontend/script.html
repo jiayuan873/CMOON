@@ -24,17 +24,124 @@
 
 <body>
     <!-- Main Content -->
-  <nav class="navbar navbar-expand-lg bg-body-tertiary" style="background-color: grey;">
+  <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
     <div class="container-fluid">
         <span class="navbar-text">
+          <div class ="slidetextRIGHT">
           <h1>Spring Boot + Python Script Example</h1>
+          </div>
         </span>
       <div class="d-flex align-items-center gap-3">
+        <div class ="slidetextLEFT" style="animation-delay: 0.4s;"> 
         <button class="btn btn-primary">About Us</button>
+        </div>
+        <div class ="slidetextLEFT" style="animation-delay: 0.7s;">
         <button class="btn btn-primary">Resources</button>
+        </div>
       </div>
     </div>
+    
   </nav>
+    <div class="drop-zone" id="dropZone">
+      <div class = "fade-in">
+    Drag & drop files here<br>or click to upload
+    <input type="file" id="fileInput" hidden multiple>
+      </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+
+    // Click opens file dialog
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    // Highlight when dragging files over
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+
+    // Remove highlight when leaving
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("dragover");
+    });
+
+    // Handle drop
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      const files = e.dataTransfer.files;
+      handleFiles(files);
+    });
+
+    // Handle file input selection
+    fileInput.addEventListener("change", () => {
+      handleFiles(fileInput.files);
+    });
+
+    function handleFiles(files) {
+      const fileList = Array.from(files).map(file => file.name).join(", ");
+      dropZone.textContent = `Uploaded: ${fileList}`;
+    }
+  </script>
+  
+  <script>
+    // Convert 3D model using Convert3D API
+async function convertModel(file, apiToken) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('from', file.name.split('.').pop().toLowerCase());
+  formData.append('to', 'glb');
+
+  // Start conversion job
+  const jobResponse = await fetch('/api/convert/jobs', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+    },
+    body: formData,
+  });
+
+  const job = await jobResponse.json();
+  
+  // Poll for completion
+  const pollStatus = async () => {
+    const statusResponse = await fetch(`/api/convert/jobs/${job.id}`, {
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+      },
+    });
+    
+    const status = await statusResponse.json();
+    
+    if (status.status === 'success' && status.signedUrl) {
+      // Update model-viewer src
+      const modelViewer = document.querySelector('model-viewer');
+      modelViewer.src = status.signedUrl;
+    } else if (status.status === 'queued' || status.status === 'in_progress') {
+      setTimeout(pollStatus, 2000); // Poll every 2 seconds
+    }
+  };
+  
+  pollStatus();
+}
+
+
+
+// Usage
+const fileInput = document.getElementById('file-input');
+const apiToken = 'YOUR_API_TOKEN';
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    convertModel(file, apiToken);
+  }
+});
+  </script>
+
+
 <button class="btn btn-primary" onclick="runScript()">Run Script</button>
 
     <!-- Bootstrap Scripts -->
