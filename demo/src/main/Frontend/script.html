@@ -40,16 +40,32 @@
         </div>
       </div>
     </div>
-    
   </nav>
-    <div class="drop-zone" id="dropZone">
+  <div class="container text-center mt-4">
+    <div class="drop-zone mx-auto mb-3" id="dropZone">
       <div class = "fade-in">
-    Drag & drop files here<br>or click to upload
+    Drag & drop STL file here<br>or click to upload
     <input type="file" id="fileInput" hidden multiple>
       </div>
   </div>
 
+  <div class="d-flex justify-content-center gap-2">
+    <button class="btn btn-secondary" onclick="runScript()">Import to Onshape</button>
+    <button class="btn btn-secondary" onclick="handleConvertModel()">Convert to STEP</button>
+    <button class="btn btn-secondary">Download File</button>
+  </div>
+</div>
+
+<body>
+  <div>
+     <div class="wave"></div>
+     <div class="wave"></div>
+     <div class="wave"></div>
+  </div>
+</body>
+
   <script>
+
     const dropZone = document.getElementById("dropZone");
     const fileInput = document.getElementById("fileInput");
 
@@ -89,60 +105,116 @@
   <script>
     // Convert 3D model using Convert3D API
 async function convertModel(file, apiToken) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('from', file.name.split('.').pop().toLowerCase());
-  formData.append('to', 'glb');
+  try {
+    console.log("=== STARTING CONVERSION ===");
+    console.log(`File: ${file.name}`);
+    console.log(`Size: ${file.size} bytes`);
+    console.log(`Type: ${file.type}`);
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('from', file.name.split('.').pop().toLowerCase());
+    formData.append('to', 'glb');
 
-  // Start conversion job
-  const jobResponse = await fetch('/api/convert/jobs', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiToken}`,
-    },
-    body: formData,
-  });
-
-  const job = await jobResponse.json();
-  
-  // Poll for completion
-  const pollStatus = async () => {
-    const statusResponse = await fetch(`/api/convert/jobs/${job.id}`, {
+    console.log("Sending conversion request...");
+    
+    // Start conversion job
+    const jobResponse = await fetch('/api/convert/jobs', {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiToken}`,
       },
+      body: formData,
     });
+
+    console.log(`Job response status: ${jobResponse.status}`);
     
-    const status = await statusResponse.json();
-    
-    if (status.status === 'success' && status.signedUrl) {
-      // Update model-viewer src
-      const modelViewer = document.querySelector('model-viewer');
-      modelViewer.src = status.signedUrl;
-    } else if (status.status === 'queued' || status.status === 'in_progress') {
-      setTimeout(pollStatus, 2000); // Poll every 2 seconds
+    if (!jobResponse.ok) {
+      if (jobResponse.status === 401) {
+        throw new Error(`Authentication failed! Invalid API token. Status: ${jobResponse.status}`);
+      } else if (jobResponse.status === 403) {
+        throw new Error(`Access forbidden! Check your API token permissions. Status: ${jobResponse.status}`);
+      } else {
+        throw new Error(`HTTP error! status: ${jobResponse.status}`);
+      }
     }
-  };
-  
-  pollStatus();
-}
 
-
-
-// Usage
-const fileInput = document.getElementById('file-input');
-const apiToken = 'YOUR_API_TOKEN';
-
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    convertModel(file, apiToken);
+    const job = await jobResponse.json();
+    console.log("Conversion job created:", job);
+    
+    // Poll for completion
+    const pollStatus = async () => {
+      console.log(`Polling status for job ${job.id}...`);
+      
+      const statusResponse = await fetch(`/api/convert/jobs/${job.id}`, {
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+        },
+      });
+      
+      const status = await statusResponse.json();
+      console.log("Status update:", status);
+      
+      if (status.status === 'success' && status.signedUrl) {
+        console.log("Conversion completed successfully!");
+        console.log("Signed URL:", status.signedUrl);
+        
+        // Update model-viewer src
+        const modelViewer = document.querySelector('model-viewer');
+        if (modelViewer) {
+          modelViewer.src = status.signedUrl;
+          console.log("Model viewer updated with new URL");
+        } else {
+          console.log("No model-viewer element found");
+        }
+      } else if (status.status === 'queued' || status.status === 'in_progress') {
+        console.log(`Status: ${status.status}, polling again in 2 seconds...`);
+        setTimeout(pollStatus, 2000); // Poll every 2 seconds
+      } else if (status.status === 'failed') {
+        console.error("Conversion failed:", status);
+        alert("Conversion failed. Check console for details.");
+      }
+    };
+    
+    pollStatus();
+    
+  } catch (error) {
+    console.error("Error in convertModel:", error);
+    alert(`Conversion error: ${error.message}`);
   }
-});
+}
   </script>
 
-
-<button class="btn btn-primary" onclick="runScript()">Run Script</button>
+<script>
+function handleConvertModel() {
+  console.log("Convert Model button clicked!");
+  
+  const fileInput = document.getElementById('fileInput');
+  const files = fileInput.files;
+  
+  if (!files || files.length === 0) {
+    console.log("No file selected. Please select a file first.");
+    alert("Please select a file first by clicking the drop zone or dragging a file.");
+    return;
+  }
+  
+  const file = files[0];
+  const apiToken = 'YOUR_API_TOKEN'; // This needs to be replaced with a real token
+  
+  // Check if API token is still the placeholder
+  if (apiToken === 'YOUR_API_TOKEN' || !apiToken || apiToken.trim() === '') {
+    console.warn("⚠️ API Token not configured!");
+    alert("API Token not configured!\n\nTo use the Convert Model feature:\n1. Get an API token from Convert3D\n2. Replace 'YOUR_API_TOKEN' in the code with your real token");
+    return;
+  }
+  
+  console.log(`Starting conversion for file: ${file.name}`);
+  console.log(`File size: ${file.size} bytes`);
+  console.log(`File type: ${file.type}`);
+  
+  convertModel(file, apiToken);
+}
+</script>
 
     <!-- Bootstrap Scripts -->
     <script
