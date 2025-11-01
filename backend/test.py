@@ -20,7 +20,7 @@ response = requests.get(api_url,
                         params=params, 
                         auth=(access_key, secret_key),
                         headers=headers)
-
+    
 # Convert the response to formatted JSON and print the `name` property
 if response.status_code == 200:
     data = response.json()

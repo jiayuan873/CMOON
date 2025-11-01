@@ -3,13 +3,20 @@
 <head>
   <title>Run Python from Spring Boot</title>
   <script>
+document.addEventListener("DOMContentLoaded", () => {
     function runScript() {
-      fetch('/run-script')
-        .then(response => response.text())
-        .then(output => alert(output))
-        .catch(err => console.error(err));
+        fetch('http://localhost:3000/run-script')
+            .then(response => response.text())
+            .then(output => {
+                document.getElementById('output').innerHTML = output;
+            })
+            .catch(err => console.error(err));
     }
-  </script>
+
+    document.getElementById('runBtn').onclick = runScript;
+});
+</script>
+
 
       <!-- Bootstrap CSS -->
     <link
@@ -50,11 +57,13 @@
   </div>
 
   <div class="d-flex justify-content-center gap-2">
-    <button class="btn btn-secondary" onclick="runScript()">Import to Onshape</button>
+    <button class="btn btn-secondary" id = "runBtn" onclick="runScript()">Import to Onshape</button>
     <button class="btn btn-secondary" onclick="handleConvertModel()">Convert to STEP</button>
     <button class="btn btn-secondary">Download File</button>
   </div>
 </div>
+
+<div id="output"></div>
 
 <body>
   <div>
