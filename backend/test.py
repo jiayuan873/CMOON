@@ -20,7 +20,6 @@ response = requests.get(api_url,
 if response.status_code == 200:
     data = response.json()
     print(json.dumps(data, indent=4))  # full JSON
-=======
 print("=== Fetching Most Recent Document ===")
 
 # First, get the list of documents sorted by modification date
@@ -39,7 +38,6 @@ documents_response = requests.get(documents_url,
 
 if documents_response.status_code == 200:
     documents_data = documents_response.json()
->>>>>>> c8d28d97ed4cdd66e6db6d0fa3ee08910b02d150:demo/src/main/java/com/example/demo/test.py
     
     if documents_data.get('items') and len(documents_data['items']) > 0:
         # Get the most recent document
