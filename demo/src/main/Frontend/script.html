@@ -1,98 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Run Python from Spring Boot</title>
+  <title>STL to STEP Converter</title>
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+  <link rel="stylesheet" href="style.css"/>
+
   <script>
-document.addEventListener("DOMContentLoaded", () => {
-    function runScript() {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('runBtn').onclick = runScript;
+      document.getElementById('convertBtn').onclick = runConversion;
+      document.getElementById('downloadBtn').onclick = downloadFile;
+
+      function runScript() {
         fetch('http://localhost:3000/run-script')
-            .then(response => response.text())
-            .then(output => {
-                document.getElementById('output').innerHTML = output;
-            })
-            .catch(err => console.error(err));
-    }
+          .then(response => response.text())
+          .then(output => {
+            document.getElementById('output').innerHTML = output;
+          })
+          .catch(err => console.error(err));
+      }
 
-    document.getElementById('runBtn').onclick = runScript;
-});
-</script>
+      function runConversion() {
+        fetch('http://localhost:3000/convert')
+          .then(response => {
+            if (!response.ok) throw new Error("Conversion failed");
+            return response.blob();
+          })
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "result.stp";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          })
+          .catch(err => console.error(err));
+      }
 
-
-      <!-- Bootstrap CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-      crossorigin="anonymous"
-    />
-
-    <link rel="stylesheet" href="style.css"/>
+      function downloadFile() {
+        window.location.href = 'http://localhost:3000/download';
+      }
+    });
+  </script>
 </head>
 
 <body>
-    <!-- Main Content -->
   <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
     <div class="container-fluid">
-        <span class="navbar-text">
-          <div class ="slidetextRIGHT">
-          <h1>Spring Boot + Python Script Example</h1>
-          </div>
-        </span>
-      <div class="d-flex align-items-center gap-3">
-        <div class ="slidetextLEFT" style="animation-delay: 0.4s;"> 
-        <button class="btn btn-primary">About Us</button>
+      <span class="navbar-text">
+        <div class="slidetextRIGHT">
+          <h1>STL to STEP Converter</h1>
         </div>
-        <div class ="slidetextLEFT" style="animation-delay: 0.7s;">
-        <button class="btn btn-primary">Resources</button>
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        <div class="slidetextLEFT" style="animation-delay: 0.4s;">
+          <button class="btn btn-primary">About Us</button>
+        </div>
+        <div class="slidetextLEFT" style="animation-delay: 0.7s;">
+          <button class="btn btn-primary">Resources</button>
         </div>
       </div>
     </div>
   </nav>
+
   <div class="container text-center mt-4">
     <div class="drop-zone mx-auto mb-3" id="dropZone">
-      <div class = "fade-in">
-    Drag & drop STL file here<br>or click to upload
-    <input type="file" id="fileInput" hidden multiple>
+      <div class="fade-in">
+        Drag & drop STL file here<br>or click to upload
+        <input type="file" id="fileInput" hidden multiple>
       </div>
+    </div>
+
+    <div class="d-flex justify-content-center gap-2">
+      <button class="btn btn-secondary" id="runBtn">Import to Onshape</button>
+      <button class="btn btn-secondary" id="convertBtn">Convert to STEP</button>
+      <button class="btn btn-secondary" id="downloadBtn">Download File</button>
+    </div>
   </div>
 
-  <div class="d-flex justify-content-center gap-2">
-    <button class="btn btn-secondary" id = "runBtn" onclick="runScript()">Import to Onshape</button>
-    <button class="btn btn-secondary" onclick="handleConvertModel()">Convert to STEP</button>
-    <button class="btn btn-secondary">Download File</button>
-  </div>
-</div>
+  <div id="output" class="mt-3"></div>
 
-<div id="output"></div>
-
-<body>
   <div>
-     <div class="wave"></div>
-     <div class="wave"></div>
-     <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
   </div>
-</body>
 
   <script>
-
     const dropZone = document.getElementById("dropZone");
     const fileInput = document.getElementById("fileInput");
 
-    // Click opens file dialog
     dropZone.addEventListener("click", () => fileInput.click());
 
-    // Highlight when dragging files over
     dropZone.addEventListener("dragover", (e) => {
       e.preventDefault();
       dropZone.classList.add("dragover");
     });
 
-    // Remove highlight when leaving
     dropZone.addEventListener("dragleave", () => {
       dropZone.classList.remove("dragover");
     });
 
-    // Handle drop
     dropZone.addEventListener("drop", (e) => {
       e.preventDefault();
       dropZone.classList.remove("dragover");
@@ -100,7 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
       handleFiles(files);
     });
 
-    // Handle file input selection
     fileInput.addEventListener("change", () => {
       handleFiles(fileInput.files);
     });
@@ -110,131 +124,11 @@ document.addEventListener("DOMContentLoaded", () => {
       dropZone.textContent = `Uploaded: ${fileList}`;
     }
   </script>
-  
-  <script>
-    // Convert 3D model using Convert3D API
-async function convertModel(file, apiToken) {
-  try {
-    console.log("=== STARTING CONVERSION ===");
-    console.log(`File: ${file.name}`);
-    console.log(`Size: ${file.size} bytes`);
-    console.log(`Type: ${file.type}`);
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('from', file.name.split('.').pop().toLowerCase());
-    formData.append('to', 'glb');
 
-    console.log("Sending conversion request...");
-    
-    // Start conversion job
-    const jobResponse = await fetch('/api/convert/jobs', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-      },
-      body: formData,
-    });
-
-    console.log(`Job response status: ${jobResponse.status}`);
-    
-    if (!jobResponse.ok) {
-      if (jobResponse.status === 401) {
-        throw new Error(`Authentication failed! Invalid API token. Status: ${jobResponse.status}`);
-      } else if (jobResponse.status === 403) {
-        throw new Error(`Access forbidden! Check your API token permissions. Status: ${jobResponse.status}`);
-      } else {
-        throw new Error(`HTTP error! status: ${jobResponse.status}`);
-      }
-    }
-
-    const job = await jobResponse.json();
-    console.log("Conversion job created:", job);
-    
-    // Poll for completion
-    const pollStatus = async () => {
-      console.log(`Polling status for job ${job.id}...`);
-      
-      const statusResponse = await fetch(`/api/convert/jobs/${job.id}`, {
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-        },
-      });
-      
-      const status = await statusResponse.json();
-      console.log("Status update:", status);
-      
-      if (status.status === 'success' && status.signedUrl) {
-        console.log("Conversion completed successfully!");
-        console.log("Signed URL:", status.signedUrl);
-        
-        // Update model-viewer src
-        const modelViewer = document.querySelector('model-viewer');
-        if (modelViewer) {
-          modelViewer.src = status.signedUrl;
-          console.log("Model viewer updated with new URL");
-        } else {
-          console.log("No model-viewer element found");
-        }
-      } else if (status.status === 'queued' || status.status === 'in_progress') {
-        console.log(`Status: ${status.status}, polling again in 2 seconds...`);
-        setTimeout(pollStatus, 2000); // Poll every 2 seconds
-      } else if (status.status === 'failed') {
-        console.error("Conversion failed:", status);
-        alert("Conversion failed. Check console for details.");
-      }
-    };
-    
-    pollStatus();
-    
-  } catch (error) {
-    console.error("Error in convertModel:", error);
-    alert(`Conversion error: ${error.message}`);
-  }
-}
-  </script>
-
-<script>
-function handleConvertModel() {
-  console.log("Convert Model button clicked!");
-  
-  const fileInput = document.getElementById('fileInput');
-  const files = fileInput.files;
-  
-  if (!files || files.length === 0) {
-    console.log("No file selected. Please select a file first.");
-    alert("Please select a file first by clicking the drop zone or dragging a file.");
-    return;
-  }
-  
-  const file = files[0];
-  const apiToken = 'YOUR_API_TOKEN'; // This needs to be replaced with a real token
-  
-  // Check if API token is still the placeholder
-  if (apiToken === 'YOUR_API_TOKEN' || !apiToken || apiToken.trim() === '') {
-    console.warn("⚠️ API Token not configured!");
-    alert("API Token not configured!\n\nTo use the Convert Model feature:\n1. Get an API token from Convert3D\n2. Replace 'YOUR_API_TOKEN' in the code with your real token");
-    return;
-  }
-  
-  console.log(`Starting conversion for file: ${file.name}`);
-  console.log(`File size: ${file.size} bytes`);
-  console.log(`File type: ${file.type}`);
-  
-  convertModel(file, apiToken);
-}
-</script>
-
-    <!-- Bootstrap Scripts -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-      crossorigin="anonymous"
-    ></script>
+  <!-- Bootstrap Scripts -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    crossorigin="anonymous"
+  ></script>
 </body>
 </html>
