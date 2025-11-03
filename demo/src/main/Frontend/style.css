@@ -8,18 +8,26 @@
     background-color: var(--primaryAccent) !important;
 }
 
-#output {
-      width: 800px;           /* Box width */
-      margin-right: 100px;
-      margin-left: 0px;    /* Center it */
-      padding: 10px;        /* Some inner space */
-       border: 3px dashed #999; /* Border around the box */
-      background-color: #f4f4f4; /* Light gray background */
-      white-space: pre-wrap; /* Preserve line breaks from script output */
-      font-family: monospace; /* Monospace for code-like look */
-      overflow-y: auto;     /* Scroll if content is too wide */
-      border-radius: 10px;
-    }
+#loadingSpinner {
+  z-index: 1050; /* Above other content */
+  position: fixed;
+  background-color: #e0f7fa;
+  width: 350px;
+  height: 100px;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 1040; /* Below the spinner */
+    display: none; /* Hidden by default */
+}
 
 .btn {
     background-color: var(--button_highlight) !important;
