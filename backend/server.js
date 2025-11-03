@@ -4,8 +4,14 @@ const { exec } = require('child_process');
 const path = require('path');
 const app = express();
 const port = 3000;
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' }); // saves files to /uploads
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000', 'http://127.0.0.1:5500'],
+  methods: ['POST'],
+  credentials: true
+}));
 
 app.get('/run-script', (req, res) => {
   console.log('Button clicked, running Python script...');
@@ -25,19 +31,32 @@ app.get('/run-script', (req, res) => {
   });
 });
 
-app.get('/convert', (req, res) => {
-  const inputFile = 'Part Studio 1 - DEMOSTL.stl';
-  const outputFile = 'result.stp';
+const fs = require('fs');
 
-  const dockerCmd = `docker run -v "${__dirname.replace(/\\/g, '/')}/:/data" stltostp stltost "/data/${inputFile}" /data/${outputFile}`;
+app.post('/convert', upload.single('stlFile'), (req, res) => {
+  console.log("Received request to /convert");
+  console.log("File received:", req.file);
+  if (!req.file) return res.status(400).send('No file uploaded');
+
+  const inputPath = req.file.path.replace(/\\/g, '/');
+  const outputFile = 'result.stp';
+  const dockerCmd = `docker run -v "${__dirname.replace(/\\/g, '/')}/:/data" stltostp stltost "/data/${inputPath}" /data/${outputFile}`;
 
   exec(dockerCmd, (error, stdout, stderr) => {
     if (error) {
-      console.error(`Error: ${error.message}`);
+      console.error(`Docker error: ${error.message}`);
       return res.status(500).send('Conversion failed');
     }
-    console.log(`Output: ${stdout}`);
-    res.download(path.join(__dirname, outputFile));
+
+    console.log(`Docker output: ${stdout}`);
+    const filePath = path.join(__dirname, outputFile);
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) return res.status(500).send('Failed to read converted file');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment; filename="converted.step"');
+      res.send(data);
+    });
   });
 });
 
@@ -51,7 +70,23 @@ app.get('/download', (req, res) => {
   });
 });
 
+app.post('/upload', upload.single('stlFile'), (req, res) => {
+  const uploadedPath = req.file.path.replace(/\\/g, '/');
+  const outputFile = 'result.stp';
+
+  const dockerCmd = `docker run -v "${__dirname.replace(/\\/g, '/')}/:/data" stltostp stltost "/data/${uploadedPath}" /data/${outputFile}`;
+
+  exec(dockerCmd, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error: ${error.message}`);
+      return res.status(500).send('Conversion failed');
+    }
+    console.log(`Docker output: ${stdout}`);
+    res.download(path.join(__dirname, outputFile), 'converted.step');
+  });
+});
+
 // ✅ Move this OUTSIDE all routes
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+app.listen(3000, '127.0.0.1', () => {
+  console.log(`Server running at http://127.0.0.1:${port}`);
 });

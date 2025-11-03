@@ -1,62 +1,22 @@
 <!DOCTYPE html>
+
+
 <html>
 <head>
   <title>STL to STEP Converter</title>
-
-  <!-- Bootstrap CSS -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    crossorigin="anonymous"
-  />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
   <link rel="stylesheet" href="style.css"/>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById('runBtn').onclick = runScript;
-      document.getElementById('convertBtn').onclick = runConversion;
-      document.getElementById('downloadBtn').onclick = downloadFile;
-
-      function runScript() {
-        fetch('http://localhost:3000/run-script')
-          .then(response => response.text())
-          .then(output => {
-            document.getElementById('output').innerHTML = output;
-          })
-          .catch(err => console.error(err));
-      }
-
-      function runConversion() {
-        fetch('http://localhost:3000/convert')
-          .then(response => {
-            if (!response.ok) throw new Error("Conversion failed");
-            return response.blob();
-          })
-          .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "result.stp";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-          })
-          .catch(err => console.error(err));
-      }
-
-      function downloadFile() {
-        window.location.href = 'http://localhost:3000/download';
-      }
-    });
-  </script>
 </head>
 
 <body>
+  
   <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
     <div class="container-fluid">
       <span class="navbar-text">
         <div class="slidetextRIGHT">
+
           <h1>STL to STEP Converter</h1>
+            
         </div>
       </span>
       <div class="d-flex align-items-center gap-3">
@@ -73,15 +33,15 @@
   <div class="container text-center mt-4">
     <div class="drop-zone mx-auto mb-3" id="dropZone">
       <div class="fade-in">
-        Drag & drop STL file here<br>or click to upload
-        <input type="file" id="fileInput" hidden multiple>
+        <span id="dropText">Drag & drop STL file here<br>or click to upload</span>
+        <input type="file" id="fileInput" hidden>
       </div>
     </div>
 
     <div class="d-flex justify-content-center gap-2">
-      <button class="btn btn-secondary" id="runBtn">Import to Onshape</button>
-      <button class="btn btn-secondary" id="convertBtn">Convert to STEP</button>
-      <button class="btn btn-secondary" id="downloadBtn">Download File</button>
+   <button type="button" class="btn btn-secondary" id="runBtn">Import to Onshape</button>
+<button type="button" class="btn btn-secondary" id="convertBtn">Convert to STEP</button>
+<button type="button" class="btn btn-secondary" id="downloadBtn">Download File</button>
     </div>
   </div>
 
@@ -93,42 +53,147 @@
     <div class="wave"></div>
   </div>
 
+  <!-- JavaScript -->
   <script>
-    const dropZone = document.getElementById("dropZone");
-    const fileInput = document.getElementById("fileInput");
 
-    dropZone.addEventListener("click", () => fileInput.click());
 
-    dropZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropZone.classList.add("dragover");
+
+    let uploadedFile = null;  
+  window.onbeforeunload = null; 
+
+  document.addEventListener("DOMContentLoaded", () => {
+
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', e => e.preventDefault());
+  });                                                                                           
+
+    document.getElementById('runBtn').onclick = runScript;
+
+    document.getElementById('convertBtn').addEventListener('click', runConversion);
+
+    document.querySelectorAll('a[href="#"]').forEach(a => {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+      });
     });
 
-    dropZone.addEventListener("dragleave", () => {
-      dropZone.classList.remove("dragover");
-    });
 
-    dropZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropZone.classList.remove("dragover");
-      const files = e.dataTransfer.files;
-      handleFiles(files);
-    });
+      document.getElementById('downloadBtn').onclick = downloadFile;
 
-    fileInput.addEventListener("change", () => {
-      handleFiles(fileInput.files);
+      const dropZone = document.getElementById("dropZone");
+      const fileInput = document.getElementById("fileInput");
+
+      dropZone.addEventListener("click", () => fileInput.click());
+
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+        handleFiles(e.dataTransfer.files);
+      });
+
+      fileInput.addEventListener("change", () => {
+        handleFiles(fileInput.files);
+      });
     });
 
     function handleFiles(files) {
-      const fileList = Array.from(files).map(file => file.name).join(", ");
-      dropZone.textContent = `Uploaded: ${fileList}`;
+      if (!files.length) return;
+      uploadedFile = files[0];
+      document.getElementById("dropText").innerHTML = `Uploaded: ${uploadedFile.name}`;
     }
+
+    function runScript() {
+      fetch('http://http://127.0.0.1:3000/run-script')
+        .then(response => response.text())
+        .then(output => {
+          document.getElementById('output').innerHTML = output;
+        })
+        .catch(err => console.error(err));
+    }
+
+let convertedBlob = null;
+
+function runConversion(e) {
+
+  e.preventDefault(); // prevents page reload
+
+  if (!uploadedFile) {
+    alert("Please upload an STL file first.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('stlFile', uploadedFile);
+
+  fetch('http://localhost:3000/convert', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+  if (!response.ok) {
+    console.error("Server responded with status:", response.status);
+    return response.text().then(text => {
+      console.error("Server response:", text);
+      throw new Error(text || "Conversion failed");
+    });
+  }
+  return response.blob();
+})
+  .then(blob => {
+    console.log("Blob received:", blob);
+    convertedBlob = blob;
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "converted.step";
+    a.click();
+    a.remove();
+
+    const output = document.getElementById('output');
+    if (output) {
+      output.innerHTML = "✅ File converted successfully!";
+    } else {
+      console.warn("Output element not found");
+    }
+  })
+  .catch(err => {
+  console.error("❌ Conversion error:", err);
+  console.error("❓ Error name:", err.name);
+  console.error("📄 Error message:", err.message);
+  console.error("📜 Full stack:", err.stack);
+  const output = document.getElementById('output');
+  if (output) {
+    output.innerHTML = `❌ Conversion failed: ${err.message || 'Unknown error'}`;
+  }
+  alert("Conversion failed: " + (err.message || 'Unknown error'));
+});
+}
+
+
+function downloadFile() {
+  if (!convertedBlob) {
+    alert("No file converted yet. Please click 'Convert to STEP' first.");
+    return;
+  }
+  const url = window.URL.createObjectURL(convertedBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'converted.step';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
   </script>
 
-  <!-- Bootstrap Scripts -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-    crossorigin="anonymous"
-  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
