@@ -18,16 +18,32 @@ app.use(cors({
 
 
 app.get('/run-script', (req, res) => {
-  console.log('Button clicked, running Python script...');
-  const scriptPath = "test.py";
+  console.log('🚀 Running import_to_onshape.py...');
 
-  exec(`python "${scriptPath}"`, (error, stdout, stderr) => {
+  // Full paths
+  const pythonExe = "C:\\Users\\jiayu\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+  const scriptPath = path.join(__dirname, "import_to_onshape.py");
+  const stepFile = path.join(__dirname, "result.stp");
+
+  // Check the file exists first
+  if (!fs.existsSync(stepFile)) {
+    console.error("❌ STEP file not found! Run conversion first.");
+    return res.status(400).send("STEP file not found. Please convert an STL file first.");
+  }
+
+  // Build the command safely
+  const cmd = `"${pythonExe}" "${scriptPath}" "${stepFile}"`;
+
+  console.log("🧠 Executing:", cmd);
+
+  exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
     if (error) {
-      console.error(`Error: ${error.message}`);
-      return res.status(500).send('Script failed to run');
+      console.error("❌ Python error:", error.message);
+      return res.status(500).send(`<pre>${error.message}</pre>`);
     }
-    if (stderr) console.error(`Stderr: ${stderr}`);
-    console.log(`Output:\n${stdout}`);
+
+    if (stderr) console.error("⚠️ Python stderr:", stderr);
+    console.log("✅ Python output:", stdout);
     res.send(`<pre>${stdout}</pre>`);
   });
 });

@@ -9,8 +9,15 @@ sys.stdout.reconfigure(encoding='utf-8')
 # ===== CONFIG =====
 ACCESS_KEY = "on_gNeNZYcPBxUUivWs0Y8SY"
 SECRET_KEY = "ZmSmZs1CkrgRU10LlkAQiPkhfDHi3y9wI2FGhWsR8rR0wuUV"
-STEP_FILE_PATH = r"C:\Users\jiayu\Downloads\93332A238_Titanium Helical Insert.STEP"
+# The STEP file path will come from Node.js as a command-line argument
+if len(sys.argv) < 2:
+    print("❌ No STEP file path provided")
+    sys.exit(1)
+
+STEP_FILE_PATH = sys.argv[1]
 # ==================
+
+print(f"📂 Using STEP file: {STEP_FILE_PATH}")
 
 headers = {
     "Accept": "application/json;charset=UTF-8",

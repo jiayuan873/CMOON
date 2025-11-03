@@ -1,7 +1,7 @@
 ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('STP203'),'2;1');
-FILE_NAME('/data/result.stp','2025-11-03T16:10:54',('slugdev'),('org'),' ','stltostp',' ');
+FILE_NAME('/data/result.stp','2025-11-03T19:16:39',('slugdev'),('org'),' ','stltostp',' ');
 FILE_SCHEMA(('CONFIG_CONTROL_DESIGN'));
 ENDSEC; 
 DATA;
