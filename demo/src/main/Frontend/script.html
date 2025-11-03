@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-
-
 <html>
 <head>
   <title>STL to STEP Converter</title>
@@ -55,13 +53,14 @@
 
   <!-- JavaScript -->
   <script>
-
-
-
     let uploadedFile = null;  
   window.onbeforeunload = null; 
 
   document.addEventListener("DOMContentLoaded", () => {
+window.onbeforeunload = () => false;
+document.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', e => e.preventDefault());
+});
 
 document.querySelectorAll('form').forEach(form => {
     form.addEventListener('submit', e => e.preventDefault());
@@ -69,7 +68,11 @@ document.querySelectorAll('form').forEach(form => {
 
     document.getElementById('runBtn').onclick = runScript;
 
-    document.getElementById('convertBtn').addEventListener('click', runConversion);
+    document.getElementById('convertBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      runConversion(e);
+    });
 
     document.querySelectorAll('a[href="#"]').forEach(a => {
       a.addEventListener('click', function(e) {
@@ -112,7 +115,7 @@ document.querySelectorAll('form').forEach(form => {
     }
 
     function runScript() {
-      fetch('http://http://127.0.0.1:3000/run-script')
+      fetch('http://127.0.0.1:3000/run-script')
         .then(response => response.text())
         .then(output => {
           document.getElementById('output').innerHTML = output;
@@ -123,8 +126,8 @@ document.querySelectorAll('form').forEach(form => {
 let convertedBlob = null;
 
 function runConversion(e) {
-
-  e.preventDefault(); // prevents page reload
+  e.preventDefault();
+  e.stopPropagation(); // prevent reload
 
   if (!uploadedFile) {
     alert("Please upload an STL file first.");
@@ -134,50 +137,28 @@ function runConversion(e) {
   const formData = new FormData();
   formData.append('stlFile', uploadedFile);
 
-  fetch('http://localhost:3000/convert', {
+  fetch('http://127.0.0.1:3000/convert', {  // ✅ match backend IP
     method: 'POST',
-    body: formData
+    body: formData,
   })
-  .then(response => {
-  if (!response.ok) {
-    console.error("Server responded with status:", response.status);
-    return response.text().then(text => {
-      console.error("Server response:", text);
-      throw new Error(text || "Conversion failed");
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.blob();
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'converted.step';
+      a.click();
+      a.remove();
+      document.getElementById('output').innerHTML = "✅ File converted successfully!";
+    })
+    .catch(err => {
+      console.error("❌ Conversion error:", err);
+      document.getElementById('output').innerHTML = `❌ Conversion failed: ${err.message}`;
     });
-  }
-  return response.blob();
-})
-  .then(blob => {
-    console.log("Blob received:", blob);
-    convertedBlob = blob;
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "converted.step";
-    a.click();
-    a.remove();
-
-    const output = document.getElementById('output');
-    if (output) {
-      output.innerHTML = "✅ File converted successfully!";
-    } else {
-      console.warn("Output element not found");
-    }
-  })
-  .catch(err => {
-  console.error("❌ Conversion error:", err);
-  console.error("❓ Error name:", err.name);
-  console.error("📄 Error message:", err.message);
-  console.error("📜 Full stack:", err.stack);
-  const output = document.getElementById('output');
-  if (output) {
-    output.innerHTML = `❌ Conversion failed: ${err.message || 'Unknown error'}`;
-  }
-  alert("Conversion failed: " + (err.message || 'Unknown error'));
-});
 }
-
 
 function downloadFile() {
   if (!convertedBlob) {
