@@ -38,7 +38,7 @@
 
     .drop-zone {
       width: 70%;
-      height: 600px;
+      height: 500px;
       margin: 40px auto; /* space below navbar */
       border: 3px dashed #999;
       border-radius: 10px;

@@ -39,7 +39,6 @@
     <div class="d-flex justify-content-center gap-2">
    <button type="button" class="btn btn-secondary" id="runBtn">Import to Onshape</button>
 <button type="button" class="btn btn-secondary" id="convertBtn">Convert to STEP</button>
-<button type="button" class="btn btn-secondary" id="downloadBtn">Download File</button>
     </div>
   </div>
 
@@ -79,9 +78,6 @@ document.querySelectorAll('form').forEach(form => {
         e.preventDefault();
       });
     });
-
-
-      document.getElementById('downloadBtn').onclick = downloadFile;
 
       const dropZone = document.getElementById("dropZone");
       const fileInput = document.getElementById("fileInput");
